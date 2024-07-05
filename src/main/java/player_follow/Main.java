@@ -36,7 +36,7 @@ public class Main extends mindustry.mod.Plugin {
   
   public Main() {
     // Load settings
-    String mode = (String) Core.settings.get("player-follow-mode", followMode);
+    String mode = (String) Core.settings.get("player-follow-mode", followMode.name());
     FollowMode temp = FollowMode.valueOf(mode);
     if (temp == null) arc.util.Log.err("[PlayerFollow] mode '@' not found, using default mode.", mode);
     else followMode = temp;
