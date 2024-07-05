@@ -127,7 +127,7 @@ public class Main extends mindustry.mod.Plugin {
     handler.<Player>register("follow-mode", "[mode] [force]", "Get/Set the follow mode.", (args, player) -> {
       // Only admins can do that
       if (!player.admin) {
-        player.sendMessage("(scarlet]You are not allowed to use this command!");
+        player.sendMessage("[scarlet]You are not allowed to use this command!");
         return;
       }
       
