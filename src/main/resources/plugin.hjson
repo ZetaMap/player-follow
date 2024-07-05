@@ -2,5 +2,5 @@ name: player-follow
 displayName: Player Follow
 author: ZetaMap
 main: player_follow.Main
-description: add a command to follow a player
-version: 1.0
+description: Allow players to follow each others. 
+version: "1.0"

@@ -32,22 +32,22 @@ import mindustry.gen.Player;
 
 
 public class SnakeFollow extends player_follow.Follower {
-  public static int playerDistance = 2 * mindustry.Vars.tilesize; // Distance between each players
+  public static int playerDistance = 1 * mindustry.Vars.tilesize; // Distance between each players
   
   public Vec2 leader = new Vec2();
   public Seq<Vec2> trail = new Seq<>();
-  private int distance, leaderPos = 0;
+  private int distance = 0, leaderPos = 0;
   private float tempPos = 0, totalHitSize = 0;
   
   public SnakeFollow(Player player) {
     super(player);
     distance = playerDistance;
-    trail.add(new Vec2(player.x, player.y));
+    trail.add(new Vec2().set(player));
   }
 
   @Override
   public void playerFollowPreProcessing() {
-    updatePos(new Vec2(followed.x, followed.y));
+    updatePos(new Vec2().set(followed));
   }
   
   @Override
@@ -58,7 +58,7 @@ public class SnakeFollow extends player_follow.Follower {
   @Override
   public void addFollower(Player player) {
     super.addFollower(player);
-    totalHitSize += player.unit().hitSize;
+    totalHitSize += getHitSize(player);
     adaptTrail();
   }
   
@@ -66,7 +66,7 @@ public class SnakeFollow extends player_follow.Follower {
   public boolean removeFollower(Player player) {
     boolean removed = super.removeFollower(player);
     if (removed && !following.isEmpty()) {
-      totalHitSize -= player.unit().hitSize;
+      totalHitSize -= getHitSize(player);
       adaptTrail();
     }
     return removed;
@@ -88,9 +88,9 @@ public class SnakeFollow extends player_follow.Follower {
 
   /** {@link #updatePos(Vec2)} must be called before updating followers. */
   public Vec2 updateFollower(Player player) {
-    tempPos += player.unit().hitSize;
+    tempPos += getHitSize(player);
     float offset = leaderPos + tempPos / getDistance();
-    tempPos += player.unit().hitSize + getDistance();
+    tempPos += getHitSize(player) + getDistance();
     
     Vec2 source = trail.get(wrapped((int)Math.ceil(offset % trail.size))).cpy(),
          target = tempPos >= 0 ? trail.get(wrapped((int)(offset % trail.size))) : leader;
@@ -102,7 +102,7 @@ public class SnakeFollow extends player_follow.Follower {
    * if one of the followers changed of size. 
    */
   public void checkTrail() {
-    float total = following.sumf(p -> p.unit().hitSize);
+    float total = following.sumf(p -> getHitSize(p));
     
     if (playerDistance != distance || total != totalHitSize) {
       distance = playerDistance;
@@ -119,11 +119,13 @@ public class SnakeFollow extends player_follow.Follower {
     int delta = getTotalSize() + 1 - trail.size;
     
     if (delta > 0) {
-      Vec2 from = trail.size > 1 ? trail.get(wrapped(leaderPos - 2)) : leader;
-      increaseTrail(leaderPos, delta, trail.get(wrapped(leaderPos - 1)), from);
+      if (trail.size > 1)
+        increaseTrail(leaderPos, delta, trail.get(wrapped(leaderPos - 1)), trail.get(wrapped(leaderPos - 2)));
+      else increaseTrail(leaderPos, delta, trail.get(wrapped(leaderPos - 1)));
     } else if (delta < 0) decreaseTrail(-delta);
   }
   
+  public void increaseTrail(int at, int amount, Vec2 pos) { increaseTrail(at, amount, pos, null); } 
   /**
    * Increase the trail {@code at} an index, of an {@code amount} of points with a dest {@code position}
    * and an {@code await_from} position.
@@ -131,9 +133,15 @@ public class SnakeFollow extends player_follow.Follower {
   public void increaseTrail(int at, int amount, Vec2 pos, Vec2 awayFrom) {
     if (leaderPos >= at) leaderPos += amount;
     
-    Vec2 offset = pos.cpy().sub(awayFrom), position = pos.cpy();
-    for (int i=0; i<amount; i++)
-      trail.insert(at + i, position.add(offset).cpy());
+    if (awayFrom == null) {
+      for (int i=0; i<amount; i++)
+        trail.insert(at + i, pos.cpy()); 
+      
+    } else {
+      Vec2 offset = pos.cpy().sub(awayFrom), position = pos.cpy();
+      for (int i=0; i<amount; i++)
+        trail.insert(at + i, position.add(offset).cpy());      
+    }
   }
   
   /** Remove an {@code amount} of points at end of the trail. */
@@ -147,9 +155,14 @@ public class SnakeFollow extends player_follow.Follower {
     leaderPos = 0;
   }
   
+  /** Get the size of the player */
+  public float getHitSize(Player player) {
+    return Math.max(1, player.unit().hitSize / 2);
+  }
+  
   /** Get the size of a follower (in the trail). */
   public float getSize(Player player) {
-    return (2 * player.unit().hitSize + getDistance()) / getDistance();
+    return (2 * getHitSize(player) + getDistance()) / getDistance();
   }
   
   /** Get the total size of the trail. */
