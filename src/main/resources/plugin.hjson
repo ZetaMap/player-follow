@@ -1,0 +1,6 @@
+name: player-follow
+displayName: Player Follow
+author: ZetaMap
+main: player_follow.Main
+description: add a command to follow a player
+version: 1.0
