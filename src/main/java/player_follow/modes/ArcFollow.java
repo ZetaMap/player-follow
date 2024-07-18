@@ -39,9 +39,14 @@ public class ArcFollow extends player_follow.Follower {
   public ArcFollow(Player player) { 
     super(player); 
   }
+  
+  @Override
+  public void updatePos() {
+    
+  }
 
   @Override
-  public Vec2 computePlayerFollow(int index, Player player) {
+  public Vec2 updateFollower(int index, Player player) {
     // Puts followers behind the followed
     int pAngle = ((index == 0 ? 0 : (index+1)%2 == 0 ? angleOffset : -angleOffset) * Mathf.ceil((index+1)/2));
     float angle = Mathf.degRad * (followed.unit().rotation + 180 + (pAngle != 0 ? pAngle%maxAngle : pAngle));
@@ -50,6 +55,6 @@ public class ArcFollow extends player_follow.Follower {
     //for (int p=i; p<following.size; p+=1) radius += player.unit().hitSize/2 + Vars.tilesize * tileOffset;
     //Mathf.within(i, pAngle, angle, radius, i);
     
-    return new Vec2(followed.x + Mathf.cos(angle) * radius, followed.y + Mathf.sin(angle) * radius);
+    return new Vec2(leader.x + Mathf.cos(angle) * radius, leader.y + Mathf.sin(angle) * radius);
   }
 }

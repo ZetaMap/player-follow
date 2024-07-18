@@ -32,27 +32,16 @@ import mindustry.gen.Player;
 
 
 public class SnakeFollow extends player_follow.Follower {
-  public static int playerDistance = 1 * mindustry.Vars.tilesize; // Distance between each players
+  /** Distance between each players */
+  public static int playerDistance = 1 * mindustry.Vars.tilesize;
   
-  public Vec2 leader = new Vec2();
   public Seq<Vec2> trail = new Seq<>();
-  private int distance = 0, leaderPos = 0;
+  private int distance = playerDistance, leaderPos = 0;
   private float tempPos = 0, totalHitSize = 0;
   
   public SnakeFollow(Player player) {
     super(player);
-    distance = playerDistance;
     trail.add(new Vec2().set(player));
-  }
-
-  @Override
-  public void playerFollowPreProcessing() {
-    updatePos(new Vec2().set(followed));
-  }
-  
-  @Override
-  public Vec2 computePlayerFollow(int index, Player player) {
-    return updateFollower(player);
   }
   
   @Override
@@ -70,12 +59,12 @@ public class SnakeFollow extends player_follow.Follower {
       adaptTrail();
     }
     return removed;
-  }
+  }  
   
-  /* Update the position of the leader. */
-  public void updatePos(Vec2 newPos) {
+  /** Update the position of the leader. */
+  @Override
+  public void updatePos() {
     checkTrail();
-    leader = newPos;
     Vec2 current = trail.get(leaderPos).cpy();
 
     while (trail.get(leaderPos).dst(leader) >= getDistance()) {
@@ -86,8 +75,9 @@ public class SnakeFollow extends player_follow.Follower {
     tempPos = followed.unit().hitSize + getDistance() + leader.dst(trail.get(leaderPos));
   }
 
-  /** {@link #updatePos(Vec2)} must be called before updating followers. */
-  public Vec2 updateFollower(Player player) {
+  /** {@link #updatePos()} must be called before updating followers. */
+  @Override
+  public Vec2 updateFollower(int index, Player player) {
     tempPos += getHitSize(player);
     float offset = leaderPos + tempPos / getDistance();
     tempPos += getHitSize(player) + getDistance();

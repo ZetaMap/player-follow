@@ -24,41 +24,43 @@
  * SOFTWARE.
  */
 
-package player_follow;
+package player_follow.modes;
 
-import arc.func.Func;
+import arc.math.geom.Vec2;
+import arc.struct.ObjectMap;
 import mindustry.gen.Player;
 
-import player_follow.modes.*;
 
-
-public enum FollowMode {
-  arc(ArcFollow::new),
-  joint(JointFollow::new),
-  snake(SnakeFollow::new),
-  orbit(OrbitFollow::new);
-
+public class JointFollow extends player_follow.Follower {
+  /** Distance between players */
+  public static int playerDistance = 2 * mindustry.Vars.tilesize;
   
-  Func<Player, Follower> mode;
-  FollowMode(Func<Player, Follower> mode) {
-    this.mode = mode;
-  }
+  private ObjectMap<Player, Vec2> last = new ObjectMap<>();
   
-  public Follower newFollow(Player player) {
-    Follower follow = mode.get(player);
-    Follower.follows.add(follow);
-    return follow;
-  }
-  
-  public void removeNotFollowed() {
-    Follower.follows.removeAll(f -> f.following.isEmpty() && f.stop());
+  public JointFollow(Player player) {
+    super(player);
   }
 
-  
-  public static FollowMode get(String name) {
-    for (FollowMode mode : values()) {
-      if (mode.name().equals(name)) return mode;
+  @Override
+  public boolean removeFollower(Player player) {
+    last.remove(player);
+    return super.removeFollower(player);
+  }  
+
+  @Override
+  public Vec2 updateFollower(int index, Player player) {
+    Player target = index == 0 ? followed : following.get(index - 1);
+    Vec2 dest = last.get(player, () -> new Vec2().set(player)),
+         followerVec = dest.cpy(), 
+         targetVec = new Vec2(target.x, target.y);
+    float distance = followerVec.dst(targetVec),
+          minDistance = playerDistance + target.unit().hitSize/2 + player.unit().hitSize/2;
+
+    if (distance > minDistance) {
+      dest.set(followerVec.add(targetVec.sub(followerVec).div(new Vec2(distance, distance)).scl(distance - minDistance)));
+      last.put(player, dest);
     }
-    return null;
+
+    return dest;
   }
 }

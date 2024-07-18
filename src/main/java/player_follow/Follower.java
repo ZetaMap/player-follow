@@ -42,6 +42,7 @@ public abstract class Follower {
   public volatile boolean taskRunning = true;
   
   public final Player followed;
+  public final Vec2 leader = new Vec2();
   public final java.util.concurrent.Future<?> task;
   public final ReentrantLock lock = new ReentrantLock();
   
@@ -58,35 +59,36 @@ public abstract class Follower {
           
           lock.lock();
           
-          playerFollowPreProcessing();
+          leader.set(followed);
+          updatePos();
           
           for (int i=0; i<following.size; i++) {
+            // Stop the task if requested
             if (!taskRunning) break;
-            
-            follower = following.get(i);
             // if is null, probably leaved the game
-            if (follower == null) continue;
-            // if followed player leaved, break the loop
-            if (followed == null) {
-              taskRunning = false;
-              break;
-            }
+            else if ((follower = following.get(i)) == null) continue;
+            // if followed player leaved, stop the task
+            else if (followed == null) break;
             
-            dest = computePlayerFollow(i, follower);
+            dest = updateFollower(i, follower);
             follower.unit().set(dest);
             follower.set(dest);
             mindustry.gen.Call.setPosition(follower.con, dest.x, dest.y);              
           }
           
           lock.unlock();
-        }          
+        }
+        
       } finally {
+        taskRunning = false;
         if (lock.isLocked()) lock.unlock();
       }
     });
   }
   
   public synchronized boolean stop() {
+    if (!taskRunning && task.isDone()) return true;
+    
     lock.lock();
     taskRunning = false;
     lock.unlock();
@@ -124,8 +126,8 @@ public abstract class Follower {
     return false;
   }
   
-  // Can be overridden to do things before computing followers positions
-  public void playerFollowPreProcessing() {}
+  /** Can be overridden to do things before computing followers positions */
+  public void updatePos() {}
 
-  public abstract Vec2 computePlayerFollow(int index, Player player);
+  public abstract Vec2 updateFollower(int index, Player player);
 }
