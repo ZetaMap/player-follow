@@ -99,52 +99,48 @@ public class OrbitFollow extends player_follow.Follower {
    * Place followers with even spacing between them. <br>
    * WARNING: this method can create a little overlapping followers. <br><br>
    * 
-   * Others methods can be found <a href="https://github.com/xorblo-doitus/queue_leu_leu/blob/main/src/queue_leu_leu/orbit/orbit.py#L78"> on the Python repo</a>.<br>
+   * Others methods can be found <a href="https://github.com/xorblo-doitus/queue_leu_leu/blob/main/src/queue_leu_leu/orbit/orbit.py"> on the Python repo</a>.<br>
    * I choice this method because it do the job, and more simple to implement.
    */
   public void adaptRings() {
-    int ring = 0, maxI = following.size - 1;
-    float angle = 0,
-          biggest = getHitSize(followed),
-          totalRadius = gap + biggest;
-    Seq<Float> inRing = new Seq<>();
+    int inRing = 0, ring = 0, maxI = following.size - 1;
+    float angle = 0, biggest = getHitSize(followed), totalRadius = gap + biggest;    
+    // Cache
+    float[] chords = new float[maxI];
+    for (int i=0; i< maxI; i++)
+      chords[i] = getHitSize(following.get(i)) + spacing + getHitSize(following.get(i+1));
 
     for (int i=0; i<following.size; i++) {
-      inRing.add(getHitSize(following.get(i)));
-      float size = inRing.peek(),
-            newRadius = totalRadius + biggest;
+      inRing++;
+      float size = getHitSize(following.get(i)), radius = totalRadius + biggest;
       
       if (size > biggest) {
         biggest = size;
-        newRadius = totalRadius + biggest;
+        radius = totalRadius + biggest;
         // Recalculate previous angle
         angle = 0;
-        for (int ii=0; ii<inRing.size-2; ii++) 
-          angle += advanceOnCircle(newRadius, inRing.get(ii) + spacing + inRing.get(ii+1));
+        for (int ii=i-inRing+1; ii<i-1; ii++) angle += advanceOnCircle(radius, chords[ii]);
       }
 
-      if (inRing.size >= 2) 
-        angle += advanceOnCircle(newRadius, inRing.get(inRing.size-2) + spacing + size);
+      if (inRing >= 2) angle += advanceOnCircle(radius, chords[i-1]);
       
-      float totalAngle = angle + advanceOnCircle(newRadius, inRing.first() + spacing + size);
-      
-      if ((inRing.size > 2 && totalAngle > Mathf.PI2) || i >= maxI) {
+      float totalAngle = angle + advanceOnCircle(radius, getHitSize(following.get(i-inRing+1)) + spacing + size); 
+      if ((inRing > 2 && totalAngle > Mathf.PI2) || i >= maxI) {
         angle = totalAngle;
         
         // Create the new ring, or reuse them, with every selected followers
         Ring r = getRing(ring);
-        r.radius = newRadius;
-        r.angles = new float[inRing.size];
+        r.radius = radius;
+        r.angles = new float[inRing];
         r.angles[0] = 0;
-        float step = (Mathf.PI2 - angle) / inRing.size;
-        for (int ii=1; ii<inRing.size; ii++)
-          r.angles[ii] = r.angles[ii-1] + step + 
-                         advanceOnCircle(r.radius, inRing.get(ii-1) + spacing + inRing.get(ii));
+        float extra = (Mathf.PI2 - angle) / inRing;
+        for (int ii=i-inRing+1, iii=1; ii<i; ii++, iii++)
+          r.angles[iii] = r.angles[iii-1] + extra + advanceOnCircle(r.radius, chords[ii]);
         
         totalRadius += gap + 2*biggest;
         ring++;
         angle = biggest = 0;
-        inRing.clear();
+        inRing = 0;
       }
     }
     
@@ -155,10 +151,12 @@ public class OrbitFollow extends player_follow.Follower {
   /** Recalculate the rings if .gap, .spacing or a follower size has been changed */
   public void checkRings() {
     float total = following.sumf(p -> getHitSize(p));
-    if (gap != ringGap || spacing != playerSpacing || total != totalHitSize) {
+    if (gap != ringGap || 
+        spacing != playerSpacing || 
+        total != totalHitSize) {
       ringGap = Math.max(ringGap, 1);
-      gap = ringGap;
       playerSpacing = Math.max(playerSpacing, 0);
+      gap = ringGap;
       spacing = playerSpacing;
       totalHitSize = total;
       adaptRings();
