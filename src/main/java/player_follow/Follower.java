@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2024 ZetaMap
+ * Copyright (c) 2024-2025 ZetaMap
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,10 +26,9 @@
 
 package player_follow;
 
-import java.util.concurrent.locks.ReentrantLock;
-
 import arc.math.geom.Vec2;
 import arc.struct.Seq;
+
 import mindustry.gen.Player;
 
 
@@ -44,21 +43,19 @@ public abstract class Follower {
   public final Player followed;
   public final Vec2 leader = new Vec2();
   public final java.util.concurrent.Future<?> task;
-  public final ReentrantLock lock = new ReentrantLock();
+  public final Object lock = new Object();
   
   public Follower(Player player) {
     followed = player;
     task = exec.submit(() -> {
-      try {
-        Player follower;
-        Vec2 dest;
-        
-        while (taskRunning) {
-          try { Thread.sleep(loopSleep); } 
-          catch (InterruptedException e) { break; }
-          
-          lock.lock();
-          
+      Player follower;
+      Vec2 dest;
+      
+      while (taskRunning) {
+        try { Thread.sleep(loopSleep); } 
+        catch (InterruptedException e) { break; }
+
+        synchronized (lock) {
           leader.set(followed);
           updatePos();
           
@@ -74,34 +71,30 @@ public abstract class Follower {
             follower.unit().set(dest);
             follower.set(dest);
             mindustry.gen.Call.setPosition(follower.con, dest.x, dest.y);              
-          }
-          
-          lock.unlock();
+          }          
         }
-        
-      } finally {
-        taskRunning = false;
-        if (lock.isLocked()) lock.unlock();
-      }
+      }   
+      
+      taskRunning = false;
     });
   }
   
-  public synchronized boolean stop() {
+  public boolean stop() {
     if (!taskRunning && task.isDone()) return true;
-    
-    lock.lock();
-    taskRunning = false;
-    lock.unlock();
-    
+
+    synchronized (lock) {
+      taskRunning = false;
+    }
+
     // Wait a little
     try { task.get(500, java.util.concurrent.TimeUnit.MILLISECONDS); } 
     catch (Exception ex) {}
     
     if (!task.isDone()) {
-      lock.lock();
-      task.cancel(true);
-      lock.unlock();
-      
+      synchronized (lock) {
+        task.cancel(true);
+      }
+
       // Wait a little
       try { task.get(200, java.util.concurrent.TimeUnit.MILLISECONDS); } 
       catch (Exception ex) {}
@@ -111,19 +104,27 @@ public abstract class Follower {
   }
   
   public void addFollower(Player player) {
-    following.add(player);
+    synchronized (lock) {
+      following.add(player);
+    }
   }
   
   public boolean removeFollower(Player player) {
-    return following.remove(player);
+    synchronized (lock) {
+      return following.remove(player);
+    }
   }
   
   public boolean removeFollower(arc.func.Boolf<Player> pred) {
-    for(int i = 0; i < following.size; i++){
-      if(pred.get(following.get(i)))
-        return removeFollower(following.get(i));
+    synchronized (lock) {
+      for(int i = 0; i < following.size; i++){
+        if (pred.get(following.get(i))) {
+          following.remove(i);
+          return true;
+        }
+      }
+      return false;      
     }
-    return false;
   }
   
   /** Can be overridden to do things before computing followers positions */

@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2024 ZetaMap
+ * Copyright (c) 2024-2025 ZetaMap
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@
 package player_follow;
 
 import arc.Core;
+
 import mindustry.gen.Player;
 
 
@@ -213,9 +214,9 @@ public class Main extends mindustry.mod.Plugin {
           current.each(f -> {
             f.stop();
             Follower newMode = defaultMode.newFollow(f.followed);
-            newMode.lock.lock();
-            newMode.following = f.following.copy();
-            newMode.lock.unlock();
+            synchronized (newMode.lock) {
+              newMode.following = f.following.copy();
+            }
           });
           // Little clean
           defaultMode.removeNotFollowed();

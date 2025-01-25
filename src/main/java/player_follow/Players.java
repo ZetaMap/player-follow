@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (c) 2024 ZetaMap
+ * Copyright (c) 2024-2025 ZetaMap
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@ package player_follow;
 
 import arc.struct.Seq;
 import arc.util.Strings;
+
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
 
@@ -76,6 +77,18 @@ public class Players {
    * at end of his nickname, to not be targeted by commands.
    */
   public static Players findByName(String arg) {
+    class PlayerSortElement {
+      public final Player player;
+      public final String strippedName;
+      public final int strippedNameSize;
+      
+      public PlayerSortElement(Player player) {
+        this.player = player;
+        this.strippedName = normalizeString(player.getInfo().lastName);
+        this.strippedNameSize = this.strippedName.length();
+      }
+    }
+    
     Seq<PlayerSortElement> temp = new Seq<>();
     Groups.player.each(p -> temp.add(new PlayerSortElement(p)));
     temp.sort(p -> p.strippedNameSize);
@@ -127,18 +140,5 @@ public class Players {
   /** Remove glyphs, colors and sides spaces. */
   public static String normalizeString(String str) {
     return Strings.stripColors(Strings.stripGlyphs(str)).trim();
-  }
-  
-  /** Class to simplify the sort of players by names*/
-  public static class PlayerSortElement {
-    public final Player player;
-    public final String strippedName;
-    public final int strippedNameSize;
-    
-    public PlayerSortElement(Player player) {
-      this.player = player;
-      this.strippedName = normalizeString(player.name);
-      this.strippedNameSize = this.strippedName.length();
-    }
   }
 }

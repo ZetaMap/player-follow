@@ -11,8 +11,13 @@ Open an issue if you have a suggestion.
 Prebuild relases can be found [here](https://github.com/ZetaMap/player-follow/releases)
 
 ### Building a Jar 
-You have just run the script ``./build`` and the plugin will compile automatically.
+Just execute the ``gradlew build`` command and the plugin will compile automatically.
 
 ### Installing
 Simply place the output jar from the step above in your server's `config/mods` directory and restart the server. <br>
 List your currently installed plugins by running the `mods` command.
+
+
+### Contributors
+All the follow modes has been develops in Python (for minimal example), with the @xorblo-doitus's help, and recoded in Java by me. <br>
+There is the repo containing Python scripts: https://github.com/xorblo-doitus/queue_leu_leu
