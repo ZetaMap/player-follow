@@ -63,7 +63,7 @@ public class Main extends mindustry.mod.Plugin {
 
   @Override
   public void registerClientCommands(arc.util.CommandHandler handler) {
-    handler.<Player>register("follow", "[player] [mode...]", "Follow/Unfollow a specific player.", 
+    handler.<Player>register("follow", "[player|unitID|UUID] [mode...]", "Follow/Unfollow a specific player.", 
     (args, player) -> {
       if (args.length >= 1) {
         // Search the target
@@ -145,7 +145,7 @@ public class Main extends mindustry.mod.Plugin {
       }
     });
     
-    handler.<Player>register("follow-stop", "[player...]", "Remove all players currently following a target.", 
+    handler.<Player>register("follow-stop", "[player|unitID|UUID...]", "Remove all players currently following a target.", 
     (args, player) -> {
       // Only admins can do that
       if (!player.admin) {
