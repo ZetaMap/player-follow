@@ -1,29 +1,20 @@
 # Player Follow
-Allow players to follow each others. <br>
-Use ``/follow [player-name|unitID|UUID] [mode...]`` command to follow a player by his name or his UUID and, without arguments, to un-follow it.
+Allow players to follow each others.
 
-For admins, the ``/follow-mode [mode] [force]`` command can be used to change the default follow mode or, without arguments, display the current mode and available modes. And 'force' players to change the follow mode with the ``force`` argument.
+Use the ``/follow [player-name|#unitID|UUID] [mode...]`` command to follow a player by his name or his UUID. <br>
+Or without arguments to un-follow it.
 
-Another command for admins is the ``/follow-stop [player|unitID|UUID...]`` command, which can be used to stop a player from being followed by other players, for annoying reasons or others.
+For admins, the ``/follow-mode [mode] ['force']`` command can be used to change the default follow mode or, without arguments, to display the current default mode and available modes. <br>
+The **'force'** argument will change the mode of all currently followed players, instead of only changing the default mode for newly followed players.
 
-
-### Feedback
-Open an issue if you have a suggestion.
-
-
-### Releases
-Prebuild relases can be found [here](https://github.com/ZetaMap/player-follow/releases)
+Another admin command is ``/follow-stop [player|#unitID|UUID...]``, which can be used to stop a player from being followed by other players, for annoying reasons or others.
 
 
-### Building a Jar 
-Just execute the ``gradlew build`` command and the plugin will compile automatically.
-
-
-### Installing
-Simply place the output jar from the step above in your server's `config/mods` directory and restart the server. <br>
-List your currently installed plugins by running the `mods` command.
+### Building
+Pre-build releases can be found in the [releases section](https://github.com/ZetaMap/player-follow/releases). <br>
+But if you want to build the plugin yourself, you can run the command ``./gradlew :build``.
 
 
 ### Contributors
-All the follow modes has been develops in Python (for minimal example), with the help of @xorblo-doitus, and recoded in Java by me. <br>
-There is the repo containing Python scripts: https://github.com/xorblo-doitus/queue_leu_leu
+All the follow modes has been develops in Python, with the help of @xorblo-doitus, and ported to Java by me. <br>
+Original repo: https://github.com/xorblo-doitus/queue_leu_leu
