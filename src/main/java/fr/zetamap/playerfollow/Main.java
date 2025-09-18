@@ -46,7 +46,7 @@ public class Main extends Plugin {
   
   public void init() {
     defaultMode = FollowModes.joint;
-    
+
     // Load settings
     String modeName = Core.settings.getString("player-follow-mode", defaultMode.name);
     FollowMode<Player> mode = FollowMode.of(modeName);

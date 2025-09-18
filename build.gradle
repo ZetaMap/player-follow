@@ -62,7 +62,7 @@ indra {
   }
     
   mitLicense()
-  publishReleasesTo("xpdustry", "https://maven.xpdustry.com/releases")
+  publishReleasesTo("xpdustry", "https://maven.xpdustry.com/zetamap")
 
   def repo = metadata.repository.split("/")
   github(repo[0], repo[1]) {

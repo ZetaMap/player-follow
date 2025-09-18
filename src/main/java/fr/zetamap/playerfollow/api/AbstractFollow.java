@@ -123,10 +123,10 @@ public abstract class AbstractFollow<T extends Position> implements Follow<T> {
 
   /**
    * @param out the player's new position, starting from the {@link #leader} position.
-   * @param index the {@link #followers} player index.
-   * @param player the player to update.
+   * @param index the {@link #followers} index.
+   * @param follower the follower to update.
    */
-  protected abstract void update(Vec2 out, int index, T p);
+  protected abstract void update(Vec2 out, int index, T follower);
   
   /** @return whether the {@code follower} or the {@link #followed} cannot be updated. */
   protected abstract boolean cannotUpdate(T follower);
