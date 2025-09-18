@@ -62,6 +62,12 @@ public class ArcFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollow 
   }
   
   @Override
+  protected void addAllImpl(Seq<Player> followers) {
+    totalHitSize += followers.sumf(this::hitSize);
+    adaptRings();
+  }
+
+  @Override
   protected void removeImpl(Player player) {
     totalHitSize -= hitSize(player);
     adaptRings();
@@ -195,7 +201,7 @@ public class ArcFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollow 
 
   /** Create missing rings if needed and return the requested one */
   public Ring getCreateRing(int index) {
-    for (int i=0; i<index-rings.size+1; i++) rings.add(ringPool.obtain());
+    for (int i=0, n=index-rings.size+1; i<n; i++) rings.add(ringPool.obtain());
     return rings.get(index);
 
   }

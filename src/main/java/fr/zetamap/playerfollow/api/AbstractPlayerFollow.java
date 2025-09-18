@@ -50,19 +50,19 @@ public abstract class AbstractPlayerFollow extends AbstractFollow<Player> {
   }
 
   @Override
-  protected boolean cannotUpdate(Player follower) {
-    return follower.dead();
+  protected boolean cannotUpdate(Player player) {
+    return player.dead();
   }
 
   @Override
-  protected void setPosition(Player follower, Vec2 target) {
-    follower.unit().set(target);
-    follower.set(target);
-    follower.snapInterpolation();
+  protected void setPosition(Player player, Vec2 target) {
+    player.unit().set(target);
+    player.set(target);
+    player.snapInterpolation();
   }
 
   /** Gets the size of the player */
-  protected float hitSize(Player follower) {
-    return follower.dead() ? 1f : Math.max(1f, follower.unit().hitSize / 2f);
+  protected float hitSize(Player player) {
+    return cannotUpdate(player) ? 1f : Math.max(1f, player.unit().hitSize / 2f);
   }
 }

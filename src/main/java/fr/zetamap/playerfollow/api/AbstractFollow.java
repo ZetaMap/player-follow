@@ -66,6 +66,12 @@ public abstract class AbstractFollow<T extends Position> implements Follow<T> {
   }
   
   @Override
+  public void addAll(Seq<T> followers) {
+    this.followers.addAll(followers);
+    addAllImpl(followers);
+  }
+
+  @Override
   public boolean remove(T follower) {
     if (!followers.remove(follower)) return false;
     removeImpl(follower);
@@ -115,6 +121,7 @@ public abstract class AbstractFollow<T extends Position> implements Follow<T> {
   
   // Can be overridden to do things when adding, removing or clearing followers.
   protected void addImpl(T follower) {}
+  protected void addAllImpl(Seq<T> followers) {}
   protected void removeImpl(T follower) {}
   protected void clearImpl() {}
   

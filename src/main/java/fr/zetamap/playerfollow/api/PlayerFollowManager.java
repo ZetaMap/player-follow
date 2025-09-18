@@ -34,7 +34,7 @@ public class PlayerFollowManager extends FollowManager<Player> {
   private static PlayerFollowManager instance;
   
   protected PlayerFollowManager() {
-    super((f, o) -> Call.setPosition(f.con, o.x, o.y), f -> f.uuid(), 0.5f * 60); // 30 fps
+    super((f, o) -> Call.setPosition(f.con, o.x, o.y), f -> f.uuid(), 60 / 30); // 30 fps
   }
   
   public static PlayerFollowManager instance() {

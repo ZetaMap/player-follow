@@ -56,6 +56,12 @@ public class SnakeFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollo
   }
   
   @Override
+  protected void addAllImpl(Seq<Player> followers) {
+    totalHitSize += followers.sumf(this::hitSize);
+    adaptTrail();
+  }
+  
+  @Override
   protected void removeImpl(Player player) {
     totalHitSize -= hitSize(player);
     adaptTrail();
@@ -78,7 +84,7 @@ public class SnakeFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollo
       getLeader().set(current.approach(leader, distance));
     }
 
-    totalDistance = followed.dead() ? 1f : followed.unit().hitSize + leader.dst(getLeader());
+    totalDistance = leaderDistance();
     vecPool.free(current);
   }
 
@@ -184,9 +190,13 @@ public class SnakeFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollo
     }
   }
 
+  public float leaderDistance() {
+    return cannotUpdate(followed) ? 1f : followed.unit().hitSize + leader.dst(getLeader());
+  }
+  
   /** Gets the size of a follower, in the trail. */
   public float size(Player player) {
-    return player.dead() ? 1f : (player.unit().hitSize + distance) / distance;
+    return cannotUpdate(player) ? 1f : (player.unit().hitSize + distance) / distance;
   }
   
   /** Gets the total size of the trail. */
@@ -194,12 +204,12 @@ public class SnakeFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollo
     return (int)(size(followed) + followers.sumf(this::size));
   }
 
-  /** Moves the leader index 1 point backward, in the trail. */
+  /** Moves the leader index 1 point backward in the trail. */
   public void moveLeader() {
     moveLeader(1);
   }
   
-  /** Moves the leader index {@code n} points backward, in the trail. */
+  /** Moves the leader index {@code n} points backward in the trail. */
   public void moveLeader(int n) {
     leaderI = Math.floorMod(leaderI - n, trail.size);
   }

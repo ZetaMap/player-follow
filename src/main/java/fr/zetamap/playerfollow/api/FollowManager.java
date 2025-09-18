@@ -115,8 +115,8 @@ public class FollowManager<T extends Position> {
    */
   public <F extends Follow<T>> F changeMode(F follow, FollowMode<T> mode) {
     F f = add(mode, follow.followed());
-    f.followers().set(follow.followers());
-    follow.followers().clear();
+    f.addAll(follow.followers());
+    follow.clear();
     return f;
   }
   
@@ -127,8 +127,8 @@ public class FollowManager<T extends Position> {
   public <F extends Follow<T>> F changeMode(T target, FollowMode<T> mode) {
     F f = get(target), newFollow = add(mode, target);
     if (f == null) return newFollow;
-    newFollow.followers().set(f.followers());
-    f.followers().clear();
+    newFollow.addAll(f.followers());
+    f.clear();
     return newFollow;
   }
   
@@ -136,8 +136,8 @@ public class FollowManager<T extends Position> {
   public void changeMode(FollowMode<T> mode) {
     all.each((p, f) -> {
       Follow<T> newFollow = add(mode, p);
-      newFollow.followers().set(f.followers());
-      f.followers().clear();
+      newFollow.addAll(f.followers());
+      f.clear();
     });
   }
   
@@ -161,10 +161,7 @@ public class FollowManager<T extends Position> {
               }
               
               try { 
-                f.update((fp, out) -> {
-                  out.clamp(0, 0, wwidth, wheight);
-                  m.notifier.get(p, out);
-                }); 
+                f.update((fp, out) -> m.notifier.get(fp, out.clamp(0, 0, wwidth, wheight))); 
               } catch (Exception t) {
                 Log.err("Failed to update follow of target '"+m.followerToString.get(f.followed())+"'", t);
                 Log.warn("Follow removed to avoid future errors.");

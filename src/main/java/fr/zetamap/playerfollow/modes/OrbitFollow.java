@@ -59,6 +59,12 @@ public class OrbitFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollo
   protected void addImpl(Player player) {
     totalHitSize += hitSize(player);
     adaptRings();
+  }  
+  
+  @Override
+  protected void addAllImpl(Seq<Player> followers) {
+    totalHitSize += followers.sumf(this::hitSize);
+    adaptRings();
   }
   
   @Override
@@ -103,14 +109,14 @@ public class OrbitFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollo
    * I chose the approximate method for optimization purposes, at the cost of slight follower overlap in some cases.
    */
   public void adaptRings() {
-    int inRing = 0, ringI = 0, maxI = followers.size-1, n, i, ii;
+    int inRing = 0, ringI = 0, maxI = followers.size-1, i, ii;
     float angle = 0, biggest = hitSize(followed), totalRadius = gap + biggest,
           size, radius, totalAngle, extra;
 
     chords.clear();
     for (i=0; i<maxI; i++) chords.add(hitSize(followers.get(i)) + spacing + hitSize(followers.get(i+1)));
 
-    for (i=0, n=followers.size; i<n; i++) {
+    for (i=0; i<followers.size; i++) {
       inRing++;
       size = hitSize(followers.get(i));
       radius = totalRadius + biggest;
@@ -130,6 +136,7 @@ public class OrbitFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollo
         angle = totalAngle;
         
         // Create the new ring, or reuse them, with every selected followers
+        arc.util.Log.info("@, @, @, @, @", ringI, inRing, radius, angle, biggest);
         Ring ring = getCreateRing(ringI);
         ring.radius = radius;
         ring.angles.clear();
@@ -170,7 +177,7 @@ public class OrbitFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollo
 
   /** Create missing rings if needed and return the requested one */
   public Ring getCreateRing(int index) {
-    for (int i=0; i<index-rings.size+1; i++) rings.add(ringPool.obtain().set(index+i));
+    for (int i=0, n=index-rings.size+1; i<n; i++) rings.add(ringPool.obtain().set(index+i));
     return rings.get(index);
   }
   

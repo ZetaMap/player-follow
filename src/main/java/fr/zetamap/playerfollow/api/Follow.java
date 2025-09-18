@@ -11,6 +11,7 @@ public interface Follow<T extends Position> {
   Seq<T> followers();
   
   boolean add(T follower);
+  void addAll(Seq<T> followers);
   boolean remove(T follower);
   boolean contains(T follower);
   void clear();
