@@ -30,12 +30,13 @@ import arc.math.geom.Vec2;
 import arc.struct.Seq;
 import arc.util.pooling.Pool;
 import arc.util.pooling.Pools;
+
 import mindustry.gen.Player;
 
 
-public class SnakeFollow extends fr.zetamap.playerfollow.Follow {
+public class SnakeFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollow {
   /** Distance between each players */
-  public static float playerDistance = 2f * mindustry.Vars.tilesize;
+  public static float playerDistance = 2f * SCALE;
   
   public Seq<Vec2> trail = new Seq<>();
   
@@ -49,19 +50,19 @@ public class SnakeFollow extends fr.zetamap.playerfollow.Follow {
   }
   
   @Override
-  protected void add0(Player player) {
+  protected void addImpl(Player player) {
     totalHitSize += hitSize(player);
     adaptTrail();
   }
   
   @Override
-  protected void remove0(Player player) {
+  protected void removeImpl(Player player) {
     totalHitSize -= hitSize(player);
     adaptTrail();
   }  
 
   @Override
-  protected void clear0() {
+  protected void clearImpl() {
     totalHitSize = 0;
     adaptTrail();
   }
@@ -185,7 +186,7 @@ public class SnakeFollow extends fr.zetamap.playerfollow.Follow {
 
   /** Gets the size of a follower, in the trail. */
   public float size(Player player) {
-    return (player.unit().hitSize + distance) / distance;
+    return player.dead() ? 1f : (player.unit().hitSize + distance) / distance;
   }
   
   /** Gets the total size of the trail. */

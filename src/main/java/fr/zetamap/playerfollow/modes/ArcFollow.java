@@ -32,15 +32,15 @@ import arc.struct.FloatSeq;
 import arc.struct.Seq;
 import arc.util.pooling.Pool;
 import arc.util.pooling.Pools;
-import mindustry.Vars;
+
 import mindustry.gen.Player;
 
 
-public class ArcFollow extends fr.zetamap.playerfollow.Follow {
+public class ArcFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollow {
   /** Radius between rings */
-  public static float ringGap = 3f * Vars.tilesize;
+  public static float ringGap = 3f * SCALE;
   /** Spacing between players */
-  public static float playerSpacing = 2f * Vars.tilesize;
+  public static float playerSpacing = 2f * SCALE;
   /** Max angle for each side, at back of the leader */
   public static float maxSidesAngle = 90f * Mathf.degRad;
 
@@ -56,19 +56,19 @@ public class ArcFollow extends fr.zetamap.playerfollow.Follow {
   }
   
   @Override
-  protected void add0(Player player) {
+  protected void addImpl(Player player) {
     totalHitSize += hitSize(player);
     adaptRings();
   }
   
   @Override
-  protected void remove0(Player player) {
+  protected void removeImpl(Player player) {
     totalHitSize -= hitSize(player);
     adaptRings();
   } 
   
   @Override
-  protected void clear0() {
+  protected void clearImpl() {
     totalHitSize = 0;
     adaptRings();
   }

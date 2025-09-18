@@ -30,21 +30,19 @@ import arc.math.Mathf;
 import arc.math.geom.Vec2;
 import arc.struct.FloatSeq;
 import arc.struct.Seq;
-import arc.util.Time;
 import arc.util.pooling.Pool;
 import arc.util.pooling.Pools;
 
-import mindustry.Vars;
 import mindustry.gen.Player;
 
 
-public class OrbitFollow extends fr.zetamap.playerfollow.Follow {
+public class OrbitFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollow {
   /** Radius between rings */
-  public static float ringGap = 3f * Vars.tilesize;
+  public static float ringGap = 3f * SCALE;
   /** Minimum spacing between players */
-  public static float playerSpacing = 2f * Vars.tilesize;
+  public static float playerSpacing = 2f * SCALE;
   /** Degrees added each times to each rings */
-  public static float angleSpeed = (1f * Vars.tilesize) / Vars.tilesize;
+  public static float angleSpeed = (1f * SCALE) / SCALE;
 
   public Seq<Ring> rings = new Seq<>();
   
@@ -58,19 +56,19 @@ public class OrbitFollow extends fr.zetamap.playerfollow.Follow {
   }
   
   @Override
-  protected void add0(Player player) {
+  protected void addImpl(Player player) {
     totalHitSize += hitSize(player);
     adaptRings();
   }
   
   @Override
-  protected void remove0(Player player) {
+  protected void removeImpl(Player player) {
     totalHitSize -= hitSize(player);
     adaptRings();
   }
   
   @Override
-  protected void clear0() {
+  protected void clearImpl() {
     totalHitSize = 0;
     adaptRings();
   }

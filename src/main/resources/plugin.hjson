@@ -3,7 +3,7 @@ displayName: Player Follow
 author: ZetaMap
 main: fr.zetamap.playerfollow.Main
 description: Allow players to follow each others.
-version: "1.3"
+version: "1.4"
 minGameVersion: "150"
 java: true
 repo: ZetaMap/player-follow

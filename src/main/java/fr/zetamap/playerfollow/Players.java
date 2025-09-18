@@ -33,13 +33,9 @@ import arc.util.pooling.Pools;
 
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
-import mindustry.net.Administration.Config;
 
 
 public class Players {
-  private static final Pool<SearchResult> resultPool = Pools.get(SearchResult.class, SearchResult::new);
-
-  
   public static void errPlayerNotFound(Player player) { err(player, "Player not found!"); }
   public static void errArgUseDenied(Player player) { err(player, "You are not allowed to use these arguments!"); }
   public static void errCommandUseDenied(Player player) { err(player, "You are not allowed to use this command!"); }
@@ -56,9 +52,8 @@ public class Players {
    * at end of his nickname, to not be targeted by commands.
    */
   public static SearchResult findByName(String arg) {
-    Pool<SortElement> pool = Pools.get(SortElement.class, SortElement::new);
     Seq<SortElement> temp = new Seq<>(Groups.player.size());
-    Groups.player.each(p -> temp.add(pool.obtain().set(p)));
+    Groups.player.each(p -> temp.add(Pools.obtain(SortElement.class, SortElement::new).set(p)));
     temp.sort(p -> p.strippedNameSize);
 
     // Process in reverse order, excluding the possibility of a player's name beginning with another player's name
@@ -67,19 +62,19 @@ public class Players {
     for (int i=temp.size-1; i>=0; i--) {
       if ((result = temp.get(i).find(args)) != null) break;
     }
-    pool.freeAll(temp);
-    return result != null ? result : resultPool.obtain().set(null, args);
+    Pools.freeAll(temp, true);
+    return result != null ? result : new SearchResult(null, args);
   }
   
   public static SearchResult findByID(String[] args) { return findByID(String.join(" ", args)); }
   /** Try to find a player by unitID (a unitID looks like this: #000001) */
   public static SearchResult findByID(String arg) {
-    if (!arg.startsWith("#") || arg.length() < 2) return resultPool.obtain().set(null, arg);
+    if (!arg.startsWith("#") || arg.length() < 2) return new SearchResult(null, arg);
     int id = Strings.parseInt(arg.split(" ")[0].substring(1));
-    if (id == Integer.MIN_VALUE) return resultPool.obtain().set(null, arg);
+    if (id == Integer.MIN_VALUE) return new SearchResult(null, arg);
     
     Player target = Groups.player.getByID(id);
-    return resultPool.obtain().set(target, target == null ? arg : arg.substring(String.valueOf(id).length()+1));
+    return new SearchResult(target, target == null ? arg : arg.substring(String.valueOf(id).length()+1));
   }
   
   public static SearchResult findByUUID(String[] args) { return findByUUID(String.join(" ", args)); }
@@ -87,7 +82,7 @@ public class Players {
   public static SearchResult findByUUID(String arg) {
     String args = arg+" ";
     Player target = Groups.player.find(p -> args.startsWith(p.uuid()+" "));
-    return resultPool.obtain().set(target, target == null ? args : args.substring(target.uuid().length()));
+    return new SearchResult(target, target == null ? args : args.substring(target.uuid().length()));
   }
   
   public static SearchResult find(String[] args) { return find(String.join(" ", args)); }
@@ -109,42 +104,18 @@ public class Players {
   public static String normalizeName(String name) {
     return Strings.stripColors(Strings.stripGlyphs(name)).trim();
   }
+
   
-  /** Verify player equality using their uuid. */
-  public static boolean equals(Player player, Player other) {
-    return player != null && (player == other || (Config.strict.bool() && player.uuid().equals(other.uuid())));
-  }
-  
-  /** Verify player equality using their uuid. */
-  public static arc.func.Boolf<Player> equals(Player player) {
-    boolean strict = Config.strict.bool();
-    return player == null ? p -> false : p -> player == p || (strict && (player.uuid().equals(p.uuid())));
-  }
-  
-  
-  /** Result of a player search. (pooled, so must be freed after use) */
-  public static class SearchResult implements Pool.Poolable {
-    public Player player;
-    public String[] rest;
-    public boolean found;
+  public static class SearchResult {
+    public final Player player;
+    public final String[] rest;
+    public final boolean found;
     
-    public SearchResult set(Player player, String argsRest) {
+    public SearchResult(Player player, String argsRest) {
       String[] args = argsRest.trim().split(" ");
       this.player = player;
       this.rest = args.length == 1 && args[0].isEmpty() ? new String[]{} : args;
       this.found = this.player != null;
-      return this;
-    }
-    
-    @Override
-    public void reset() {
-      player = null;
-      rest = null;
-      found = false;
-    }    
-    
-    public void free() {
-      resultPool.free(this);
     }
   }
   
@@ -169,9 +140,9 @@ public class Players {
       // First search using the player name, and after, 
       // using the player info name (in case of the server changed his name)
       if (args.startsWith(strippedName)) 
-        return resultPool.obtain().set(player, args.substring(strippedNameSize));
+        return new SearchResult(player, args.substring(strippedNameSize));
       else if (strippedInfoName != null && args.startsWith(strippedInfoName)) 
-        return resultPool.obtain().set(player, args.substring(strippedInfoNameSize));
+        return new SearchResult(player, args.substring(strippedInfoNameSize));
       else 
         return null;
     }

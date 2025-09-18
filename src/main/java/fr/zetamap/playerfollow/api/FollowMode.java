@@ -24,68 +24,55 @@
  * SOFTWARE.
  */
 
-package fr.zetamap.playerfollow;
+package fr.zetamap.playerfollow.api;
 
 import arc.func.Cons;
 import arc.func.Func;
+import arc.math.geom.Position;
 import arc.struct.ObjectMap;
 
-import mindustry.gen.Player;
 
-import fr.zetamap.playerfollow.modes.*;
-
-
-public class FollowMode {
-  protected static final ObjectMap<String, FollowMode> modes = new ObjectMap<>();
-  protected static final ObjectMap<Class<?>, FollowMode> modesTypes = new ObjectMap<>();
+@SuppressWarnings("unchecked")
+public class FollowMode<T extends Position> {
+  protected static final ObjectMap<String, FollowMode<?>> modes = new ObjectMap<>();
+  protected static final ObjectMap<Class<?>, FollowMode<?>> modesTypes = new ObjectMap<>();
   
   public final String name;
   public final Class<?> type;
-  final Func<Player, Follow> constructor;
-  
-  FollowMode(String name, Class<?> type, Func<Player, Follow> constructor) {
+  protected final Func<T, Follow<T>> constructor;
+
+  FollowMode(String name, Class<Follow<T>> type, Func<T, Follow<T>> constructor) {
     this.name = name; 
     this.type = type;
     this.constructor = constructor;
   }
   
   /** Consider using {@link FollowManager#add(FollowMode, Player)} instead, for a proper registration. */
-  @SuppressWarnings("unchecked")
-  public <T extends Follow> T create(Player target) {
-    return (T)constructor.get(target);
+  public <F extends Follow<T>> F create(T target) {
+    return (F)constructor.get(target);
   }
-  
 
-  public static <T extends Follow> FollowMode add(String name, Class<T> type, Func<Player, T> mode) {
-    @SuppressWarnings("unchecked")
-    FollowMode m = new FollowMode(name, type, (Func<Player, Follow>)mode);
+  public static <T extends Position, F extends Follow<T>> FollowMode<T> 
+                add(String name, Class<F> type, Func<T, F> mode) {
+    FollowMode<T> m = new FollowMode<>(name, (Class<Follow<T>>)type, (Func<T, Follow<T>>)mode);
     modes.put(name, m);
     modesTypes.put(type, m);
     return m;
   }
-  
-  public static FollowMode of(String name) {
-    return modes.get(name);
+
+  public static <T extends Position> FollowMode<T> of(String name) {
+    return (FollowMode<T>)modes.get(name);
   }
   
-  public static FollowMode of(Follow follow) {
-    return modesTypes.get(follow.getClass());
+  public static <T extends Position> FollowMode<T> of(Follow<T> follow) {
+    return (FollowMode<T>)modesTypes.get(follow.getClass());
   }
   
-  public static FollowMode of(Class<? extends Follow> type) {
-    return modesTypes.get(type);
+  public static <T extends Position> FollowMode<T> of(Class<Follow<T>> type) {
+    return (FollowMode<T>)modesTypes.get(type);
   }
   
-  
-  public static void each(Cons<FollowMode> consumer) {
+  public static void each(Cons<FollowMode<?>> consumer) {
     modes.each((n, m) -> consumer.get(m));
   }
-  
-  
-  // Default modes
-  public static final FollowMode
-    arc = add("arc", ArcFollow.class, ArcFollow::new),
-    joint = add("joint", JointFollow.class, JointFollow::new),
-    snake = add("snake", SnakeFollow.class, SnakeFollow::new),
-    orbit = add("orbit", OrbitFollow.class, OrbitFollow::new);
 }

@@ -27,48 +27,58 @@
 package fr.zetamap.playerfollow;
 
 import arc.Core;
+import arc.Events;
+import arc.util.CommandHandler;
+import arc.util.Log;
 
+import mindustry.game.EventType;
 import mindustry.gen.Player;
+import mindustry.mod.Plugin;
+
+import fr.zetamap.playerfollow.api.AbstractPlayerFollow;
+import fr.zetamap.playerfollow.api.FollowMode;
+import fr.zetamap.playerfollow.api.PlayerFollowManager;
 
 
-public class Main extends mindustry.mod.Plugin {
-  public static FollowMode defaultMode;
+public class Main extends Plugin {
+  public static PlayerFollowManager manager;
+  public static FollowMode<Player> defaultMode;
   
   public void init() {
-    defaultMode = FollowMode.joint;
+    defaultMode = FollowModes.joint;
     
     // Load settings
     String modeName = Core.settings.getString("player-follow-mode", defaultMode.name);
-    FollowMode mode = FollowMode.of(modeName);
+    FollowMode<Player> mode = FollowMode.of(modeName);
     if (mode == null) {
-      arc.util.Log.err("[PlayerFollow] mode '@' not found, using the default mode: @", modeName, defaultMode.name);
+      Log.err("[PlayerFollow] mode '@' not found, using the default mode: @", modeName, defaultMode.name);
       Core.settings.put("player-follow-mode", defaultMode.name);
     } else defaultMode = mode;
     
     // Register an event to remove player from followed target
-    arc.Events.on(mindustry.game.EventType.PlayerLeave.class, e -> {
+    Events.on(EventType.PlayerLeave.class, e -> {
       if (e.player == null) return;
-      Follow follow = FollowManager.get(e.player);
+      AbstractPlayerFollow follow = manager.get(e.player);
 
       if (follow != null) {
-        follow.message("The followed player disconnected! ([white]@[orange])", follow.followed.name);
-        FollowManager.remove(follow);
-      } else FollowManager.removeFollower(e.player);
+        follow.message("The followed player disconnected! ([white]@[orange])", follow.followed().name);
+        manager.remove(follow);
+      } else manager.removeFollower(e.player);
     
     });
     
     // Start the follow updater
-    FollowManager.init();
+    manager = PlayerFollowManager.instance();
   }
 
   @Override
-  public void registerClientCommands(arc.util.CommandHandler handler) {
+  public void registerClientCommands(CommandHandler handler) {
     handler.<Player>register("follow", "[player|#unitID|UUID] [mode...]", "Follow/Unfollow a specific player.", 
     (args, player) -> {
-      Follow follow;
+      AbstractPlayerFollow follow;
       
       if (args.length == 0) {
-        follow = FollowManager.find(player);
+        follow = manager.find(player);
         
         if (follow != null) {
           follow.remove(player);
@@ -82,25 +92,22 @@ public class Main extends mindustry.mod.Plugin {
 
       if (!target.found) {
         Players.errPlayerNotFound(player);
-        target.free();
         return;
       // Avoid self targeting
-      } else if (Players.equals(target.player, player)) {
+      } else if (target.player == player) {
         Players.err(player, "You cannot follow yourself...");
-        target.free();
         return;
       // Check for a potential follow loop
-      } else if ((follow = FollowManager.get(player)) != null && follow.contains(target.player)) {
+      } else if ((follow = manager.get(player)) != null && follow.contains(target.player)) {
         Players.err(player, "You cannot follow a player who already follows you.");
-        target.free();
         return;
       }
 
-      follow = FollowManager.get(target.player);
+      follow = manager.get(target.player);
 
       // Create a new follow, if none exists for the target
       if (follow == null) {
-        FollowMode mode = defaultMode;
+        FollowMode<Player> mode = defaultMode;
         
         // Use the follow mode if specified
         if (target.rest.length != 0) {
@@ -109,27 +116,25 @@ public class Main extends mindustry.mod.Plugin {
 
           if (mode == null) {
             Players.err(player, "Follow mode '[cyan]@[scarlet]' not found.", modeName);
-            target.free();
             return;
           }
         }
         
-        follow = FollowManager.add(mode, target.player);
+        follow = manager.add(mode, target.player);
         
       // Check whether the player is already following the target
       } else if (follow.contains(player)) {
         Players.warn(player, "You are already following this player.");
-        target.free();
         return;
         
       // Ignore mode if another player is following the target
-      } else if (target.rest.length != 0) Players.warn(player, "Follow mode ignored because another follower set it.");
+      } else if (target.rest.length != 0) 
+        Players.warn(player, "Follow mode ignored because another follower set it.");
 
       // Remove the player from followers of a potential another target, and add it to this target
-      FollowManager.removeFollower(player);
+      manager.removeFollower(player);
       follow.add(player);
       Players.ok(player, "You are now following '[white]@[green]'.", target.player.name);
-      target.free();
     });
     
     handler.<Player>register("follow-stop", "[player|#unitID|UUID...]", "Remove all players currently following a target.", 
@@ -150,10 +155,9 @@ public class Main extends mindustry.mod.Plugin {
         }
         
         target = t.player;
-        t.free();
       } else target = player;
 
-      Follow follow = FollowManager.get(target);
+      AbstractPlayerFollow follow = manager.get(target);
         
       if (follow == null) {
         if (target == player) Players.err(player, "You are currently followed by no one.");
@@ -161,7 +165,7 @@ public class Main extends mindustry.mod.Plugin {
         return;
       }
     
-      FollowManager.remove(follow); 
+      manager.remove(follow); 
       follow.message("'@[orange]' requested to not be followed!", follow.followed.name);
       Players.ok(player, "Follow stopped and followers notified.");
     });
@@ -182,7 +186,7 @@ public class Main extends mindustry.mod.Plugin {
         return;
       }        
       
-      FollowMode mode = FollowMode.of(args[0]);
+      FollowMode<Player> mode = FollowMode.of(args[0]);
       
       if (mode == null) {
         Players.err(player, "Mode [cyan]@[scarlet] not found.", args[0]);
@@ -200,7 +204,7 @@ public class Main extends mindustry.mod.Plugin {
       
       // Change the mode of all target if 'force' argument is provided
       if (args.length == 2) {
-        FollowManager.changeMode(mode);
+        manager.changeMode(mode);
         Players.ok(player, "Forced new mode to all players.");
       }
     });

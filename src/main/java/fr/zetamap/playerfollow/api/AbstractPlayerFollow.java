@@ -24,53 +24,45 @@
  * SOFTWARE.
  */
 
-package fr.zetamap.playerfollow.modes;
+package fr.zetamap.playerfollow.api;
 
 import arc.math.geom.Vec2;
-import arc.struct.ObjectMap;
-import arc.util.pooling.Pool;
-import arc.util.pooling.Pools;
-
+import fr.zetamap.playerfollow.Players;
+import mindustry.Vars;
 import mindustry.gen.Player;
 
 
-public class JointFollow extends fr.zetamap.playerfollow.api.AbstractPlayerFollow {
-  /** Distance between players */
-  public static float playerDistance = 2f * SCALE;
-  
-  private final ObjectMap<Player, Vec2> last = new ObjectMap<>();
-  private final Pool<Vec2> vecPool = Pools.get(Vec2.class, Vec2::new);
-  
-  public JointFollow(Player target) {
+public abstract class AbstractPlayerFollow extends AbstractFollow<Player> {
+  public static float SCALE = Vars.tilesize;
+
+  public AbstractPlayerFollow(Player target) {
     super(target);
   }
 
-  @Override
-  protected void removeImpl(Player player) {
-    Vec2 v = last.remove(player);
-    if (v != null) vecPool.free(v);
-  }  
+  /** Send a message to followers */
+  public void message(String message, Object... args) {
+    message(Players::warn, message, args);
+  }
   
-  @Override
-  protected void clearImpl() {
-    last.each((p, v) -> vecPool.free(v));
-    last.clear();
-  } 
+  /** Send a message to followers */
+  public void message(arc.func.Cons3<Player, String, Object[]> sender, String message, Object... args) {
+    followers.each(p -> sender.get(p, message, args));
+  }
 
   @Override
-  protected void update(Vec2 out, int index, Player player) {
-    Player target = index == 0 ? followed : followers.get(index-1);
-    Vec2 dest = last.get(player, () -> vecPool.obtain().set(player));
-    out.set(target); // reuse 'out' instead of creating another Vec2
-    float distance = dest.dst(out), minDistance = playerDistance + hitSize(target) + hitSize(player);
+  protected boolean cannotUpdate(Player follower) {
+    return follower.dead();
+  }
 
-    if (distance > minDistance) {
-      out.sub(dest);
-      out.x /= distance; // There is no method to divide by a scalar instead of a vector
-      out.y /= distance; //
-      dest.add(out.scl(distance - minDistance));
-    }
+  @Override
+  protected void setPosition(Player follower, Vec2 target) {
+    follower.unit().set(target);
+    follower.set(target);
+    follower.snapInterpolation();
+  }
 
-    out.set(dest);
+  /** Gets the size of the player */
+  protected float hitSize(Player follower) {
+    return follower.dead() ? 1f : Math.max(1f, follower.unit().hitSize / 2f);
   }
 }
