@@ -67,6 +67,7 @@ public abstract class AbstractFollow<T extends Position> implements Follow<T> {
   
   @Override
   public void addAll(Seq<T> followers) {
+    followers.removeAll(this.followers); //avoid duplication
     this.followers.addAll(followers);
     addAllImpl(followers);
   }
